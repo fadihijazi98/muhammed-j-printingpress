@@ -1,0 +1,10 @@
+# The live database and its journals never belong in the repository.
+data/*
+!data/.gitkeep
+
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+.DS_Store
+.playwright-mcp/

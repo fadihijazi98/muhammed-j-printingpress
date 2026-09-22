@@ -1,0 +1,883 @@
+/*
+ * Amiri Quran, self-hosted so the app never needs the internet.
+ * It ships in a single regular weight, so emphasis here comes from size and
+ * colour, and bold text is left to the browser to synthesise.
+ */
+
+@font-face {
+    font-family: 'Amiri Quran';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/assets/fonts/amiri-quran-arabic.woff2') format('woff2');
+    unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+                   U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41,
+                   U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+    font-family: 'Amiri Quran';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/assets/fonts/amiri-quran-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                   U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                   U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+    --bg: #f3f5f7;
+    --surface: #ffffff;
+    --ink: #16212b;
+    --ink-soft: #5c6b79;
+    --line: #dfe5ea;
+
+    --brand: #0f6e64;
+    --brand-dark: #0b5349;
+    --brand-soft: #e6f2f0;
+
+    --good: #16794c;
+    --good-soft: #e7f4ee;
+    --bad: #b3261e;
+    --bad-soft: #fdeceb;
+    --warn: #96560a;
+    --warn-soft: #fdf1e2;
+
+    --font: 'Amiri Quran', 'Segoe UI', Tahoma, 'Geeza Pro', Arial, sans-serif;
+    /* Amiri Quran has no digits of its own at UI weight, and figures must line
+       up in money columns, so numbers fall back to a tabular system face. */
+    --font-num: 'Segoe UI', Tahoma, Arial, sans-serif;
+
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16, 33, 43, .06), 0 6px 18px rgba(16, 33, 43, .06);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    /* Amiri Quran sits small on the em, so the base size is raised to match. */
+    font-size: 18px;
+    line-height: 1.9;
+}
+
+.money-figure,
+td.num,
+td.money,
+.stat .value,
+.computed,
+.summary-line strong,
+.summary-net strong,
+input[inputmode="decimal"],
+input[type="date"] {
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+}
+
+a {
+    color: var(--brand-dark);
+}
+
+/* ---------- layout ---------- */
+
+.shell {
+    display: grid;
+    /* minmax(0, …): a plain 1fr refuses to shrink below its widest table. */
+    grid-template-columns: 250px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 20px 14px;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar .brand {
+    font-size: 20px;
+    font-weight: 700;
+    padding: 6px 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, .18);
+    margin-bottom: 12px;
+}
+
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    color: #dff0ed;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.sidebar nav a:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+.sidebar nav a.active {
+    background: #fff;
+    color: var(--brand-dark);
+    font-weight: 700;
+}
+
+.sidebar .group-label {
+    font-size: 13px;
+    color: #9cc6c0;
+    padding: 14px 12px 6px;
+    letter-spacing: .3px;
+}
+
+.main {
+    padding: 22px 26px 60px;
+    max-width: 1280px;
+    min-width: 0;
+}
+
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.topbar h1 {
+    font-size: 26px;
+    margin: 0;
+}
+
+.whoami {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 8px 6px 16px;
+    box-shadow: var(--shadow);
+}
+
+.whoami .name {
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 13px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--brand-soft);
+    color: var(--brand-dark);
+    font-weight: 600;
+}
+
+.badge.staff {
+    background: #eef1f4;
+    color: var(--ink-soft);
+}
+
+.badge.off {
+    background: var(--bad-soft);
+    color: var(--bad);
+}
+
+.badge.on {
+    background: var(--good-soft);
+    color: var(--good);
+}
+
+/* ---------- cards ---------- */
+
+.card {
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card > h2 {
+    margin: 0;
+    padding: 14px 18px;
+    font-size: 18px;
+    border-bottom: 1px solid var(--line);
+    background: #fbfcfd;
+}
+
+.card .body {
+    padding: 18px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+}
+
+.stat .label {
+    color: var(--ink-soft);
+    font-size: 15px;
+}
+
+.stat .value {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+.stat.good .value { color: var(--good); }
+.stat.bad .value  { color: var(--bad); }
+.stat.warn .value { color: var(--warn); }
+
+/* ---------- forms ---------- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px 16px;
+    align-items: start;
+}
+
+.field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font: inherit;
+    background: #fff;
+    color: var(--ink);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+    border-color: var(--brand);
+}
+
+.field input.error,
+.field select.error {
+    border-color: var(--bad);
+    background: var(--bad-soft);
+}
+
+.field .hint {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+}
+
+.field .msg {
+    color: var(--bad);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.total-box {
+    background: var(--brand-soft);
+    border: 1px solid #bfdedb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brand-dark);
+    text-align: center;
+}
+
+.total-box small {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    background: var(--brand);
+    color: #fff;
+}
+
+.btn:hover {
+    background: var(--brand-dark);
+}
+
+.btn.secondary {
+    background: #fff;
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+.btn.secondary:hover {
+    background: #f1f4f6;
+}
+
+.btn.danger {
+    background: #fff;
+    color: var(--bad);
+    border-color: #f0c5c2;
+}
+
+.btn.danger:hover {
+    background: var(--bad-soft);
+}
+
+.btn.small {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+/* ---------- tables ---------- */
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+thead th {
+    text-align: right;
+    background: #fbfcfd;
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+tbody tr:hover {
+    background: #fafbfc;
+}
+
+td.num,
+th.num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+td.money {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+td.money.in  { color: var(--good); }
+td.money.out { color: var(--bad); }
+
+.empty {
+    padding: 30px 18px;
+    text-align: center;
+    color: var(--ink-soft);
+}
+
+.who {
+    font-size: 13px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+}
+
+/* ---------- flash ---------- */
+
+.flash {
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    margin-bottom: 14px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.flash.success {
+    background: var(--good-soft);
+    color: var(--good);
+    border-color: #bfe2d0;
+}
+
+.flash.error {
+    background: var(--bad-soft);
+    color: var(--bad);
+    border-color: #f0c5c2;
+}
+
+/* ---------- login ---------- */
+
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(160deg, #0b5349, #0f6e64);
+    padding: 20px;
+}
+
+.login-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+    padding: 30px 28px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    text-align: center;
+}
+
+.login-card p.sub {
+    margin: 0 0 22px;
+    text-align: center;
+    color: var(--ink-soft);
+}
+
+.login-card .field {
+    margin-bottom: 14px;
+}
+
+.login-card .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.hint-box {
+    margin-top: 18px;
+    background: #f6f8f9;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--ink-soft);
+}
+
+/* ---------- misc ---------- */
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.filters .field {
+    min-width: 160px;
+}
+
+details.editor > summary {
+    cursor: pointer;
+    color: var(--brand-dark);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+details.editor[open] > summary {
+    margin-bottom: 12px;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.muted {
+    color: var(--ink-soft);
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 22px 0 8px;
+}
+
+@media (max-width: 900px) {
+    .shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar {
+        position: static;
+        height: auto;
+    }
+
+    .sidebar nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .sidebar .group-label {
+        width: 100%;
+        padding-bottom: 0;
+    }
+
+    .main {
+        padding: 16px;
+    }
+}
+
+@media print {
+    .sidebar, .topbar .whoami, .actions, .btn, .filters {
+        display: none !important;
+    }
+
+    body { background: #fff; }
+
+    .shell { grid-template-columns: minmax(0, 1fr); }
+
+    .card { box-shadow: none; }
+}
+
+/* ---------- one-page sale form ---------- */
+
+.sale-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: start;
+}
+
+.sale-main {
+    min-width: 0;
+}
+
+.step > h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-no {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-size: 16px;
+    flex: none;
+}
+
+.optional {
+    margin-inline-start: auto;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    background: #eef1f4;
+    border-radius: 999px;
+    padding: 2px 12px;
+}
+
+/* A line of "quantity × price = total", kept on one row so the sum reads across. */
+.calc-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.calc-row > .field {
+    flex: 1 1 130px;
+    min-width: 0;
+}
+
+/*
+ * A cost line holds four fields in a column that is narrower than the sale row,
+ * so it flows into as many columns as fit rather than forcing one cramped row.
+ * The × and = signs are dropped here: the labels already say what each field is.
+ */
+.cost-line {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 12px 10px;
+}
+
+.cost-line > .calc-sign {
+    display: none;
+}
+
+.cost-line > .field {
+    min-width: 0;
+}
+
+.calc-sign {
+    font-size: 22px;
+    color: var(--ink-soft);
+    padding-top: 34px;
+    flex: none;
+}
+
+.calc-result .computed {
+    padding: 11px 12px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    background: #fbfcfd;
+    color: var(--ink-soft);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.field-strong input {
+    border-color: var(--brand);
+    background: var(--brand-soft);
+    font-size: 19px;
+}
+
+.final-row {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.link-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 14px;
+    color: var(--brand-dark);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.cost-lines:empty + .add-line {
+    margin-top: 0;
+}
+
+.cost-line {
+    background: #fbfcfd;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    /* Inline-end padding leaves room for the remove button in the corner. */
+    padding: 14px 14px 14px 46px;
+    margin-top: 12px;
+}
+
+.remove-line {
+    position: absolute;
+    inset-inline-end: 10px;
+    top: 12px;
+    margin: 0;
+    padding: 6px 11px;
+}
+
+.add-line {
+    margin-top: 14px;
+}
+
+/* ---------- live summary ---------- */
+
+.sale-summary {
+    position: sticky;
+    top: 20px;
+}
+
+.summary-card .body {
+    padding-top: 6px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line);
+}
+
+.summary-line span {
+    color: var(--ink-soft);
+    font-size: 16px;
+}
+
+.summary-line strong {
+    white-space: nowrap;
+}
+
+.summary-line.cost strong {
+    color: var(--bad);
+}
+
+.summary-line.total-cost {
+    border-bottom: 0;
+}
+
+.summary-line.total-cost strong {
+    color: var(--bad);
+    font-size: 19px;
+}
+
+.summary-net {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--good-soft);
+    border: 1px solid #bfe2d0;
+}
+
+.summary-net span {
+    color: var(--good);
+}
+
+.summary-net strong {
+    font-size: 24px;
+    color: var(--good);
+    white-space: nowrap;
+}
+
+.summary-net strong.negative {
+    color: var(--bad);
+}
+
+.summary-card .save-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+    padding: 14px 18px;
+    font-size: 19px;
+}
+
+.summary-card .cancel-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+/* ---------- sale detail ---------- */
+
+.breakdown {
+    width: 100%;
+}
+
+.breakdown td,
+.breakdown th {
+    padding: 10px 14px;
+}
+
+.breakdown .group-row td {
+    background: #fbfcfd;
+    color: var(--ink-soft);
+    font-size: 15px;
+}
+
+.breakdown .net-row td {
+    background: var(--good-soft);
+    font-size: 20px;
+    color: var(--good);
+    border-top: 2px solid #bfe2d0;
+}
+
+.breakdown .net-row td.negative {
+    background: var(--bad-soft);
+    color: var(--bad);
+}
+
+.adjusted-note {
+    display: inline-block;
+    font-size: 14px;
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-radius: 999px;
+    padding: 2px 12px;
+    margin-inline-start: 8px;
+}
+
+@media (max-width: 1100px) {
+    .sale-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sale-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 700px) {
+    .calc-sign {
+        display: none;
+    }
+
+    .calc-row > .field,
+    .cost-line > .field {
+        flex: 1 1 100%;
+    }
+
+    .cost-line {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
