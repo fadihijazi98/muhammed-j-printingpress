@@ -156,14 +156,22 @@ data/app.sqlite
 
 ## حل المشاكل
 
-| المشكلة | الحل |
-| --- | --- |
-| «PHP غير موجود» | ثبّت PHP كما في قسم المتطلبات أعلاه. |
-| المنفذ 8123 مشغول | افتح ملف البدء وغيّر الرقم `8123` إلى `8124` مثلاً. |
-| ظهرت صفحة «حدث خطأ» | التفاصيل التقنية في ملف `data/error.log`. |
-| نسيت كلمة مرور المدير | استخدم حساب مدير آخر لتغييرها من صفحة المستخدمون. |
+**أول خطوة دائماً:** شغّل ملف **`diagnose.bat`** (ويندوز) بالضغط عليه مرتين.
+سيفحص الجهاز ويحفظ تقريراً باسم `diagnose-report.txt` بجانب البرنامج — أرسله للمبرمج.
 
----
+| المشكلة | السبب | الحل |
+| --- | --- | --- |
+| «PHP غير مثبّت» | PHP غير موجود أو ليس في PATH | نزّل PHP 8 من [windows.php.net](https://windows.php.net/download/)، فك الضغط إلى `C:\php`، وأضف `C:\php` إلى PATH |
+| «إضافة pdo_sqlite غير مفعّلة» | ويندوز يأتي بها **معطّلة** افتراضياً | افتح `php.ini` واحذف الفاصلة المنقوطة من `;extension=pdo_sqlite` |
+| «إضافة mbstring غير مفعّلة» | معطّلة افتراضياً كذلك | احذف الفاصلة المنقوطة من `;extension=mbstring` |
+| «المنفذ مشغول» | برنامج آخر يستعمل 8123 | افتح `start.bat` بالمفكرة وغيّر `8123` إلى `8124` |
+| المتصفح يقول «تعذّر الوصول» | فُتح قبل أن يجهز الخادم | انتظر ثانيتين وحدّث الصفحة |
+| صفحة «حدث خطأ» | خطأ داخلي | التفاصيل في `data\error.log`، ويظهر آخرها في تقرير `diagnose.bat` |
+| «ملفات البرنامج ناقصة» | المجلد لم يُفك ضغطه كاملاً | فك ضغط الملف المضغوط بالكامل ثم شغّل `start.bat` من داخله |
+
+> **ملاحظة مهمة لويندوز:** ملف `php.ini` قد لا يكون موجوداً بعد التثبيت.
+> إن وجدت `php.ini-development` فقط، انسخه باسم `php.ini` ثم عدّله.
+> اسم الملف المستعمل فعلياً يظهر في تقرير `diagnose.bat` تحت بند `[3]`.
 
 # For developers
 
@@ -171,6 +179,7 @@ Plain PHP 8.1+ with SQLite. No Composer, no build step, no framework.
 
 ```
 start.command / start.bat    one-click launcher (php -S … -t public router.php)
+diagnose.bat                 Windows setup report -> diagnose-report.txt
 router.php                   built-in-server router: static files, else front controller
 public/index.php             front controller
 public/assets                app.css, app.js, sale-form.js, fonts/ (Amiri Quran, self-hosted)
@@ -194,6 +203,11 @@ report, so per-sale costing never double counts. Editing a sale replaces its cos
 **The font** is Amiri Quran, self-hosted in `public/assets/fonts/` so the app needs no
 internet. It ships in a single 400 weight; emphasis is by size and colour, and digits
 fall back to a tabular system face (`--font-num`) so money columns line up.
+
+**Windows requires two extensions** that its stock `php.ini` ships commented out:
+`pdo_sqlite` and `mbstring`. `start.bat` checks for each by name and prints the exact
+`php.ini` line to change, because without them PHP starts fine and then every page 500s.
+Batch files are kept CRLF via `.gitattributes`.
 
 **Money** is stored as integer أغورة (cents) everywhere — `Money::parse` / `Money::format`
 convert at the edges, and both accept Arabic-Indic digits.

@@ -1,0 +1,16 @@
+# Windows launchers must keep CRLF endings wherever they are checked out,
+# otherwise cmd.exe can mishandle labels and multi-line blocks.
+*.bat text eol=crlf
+
+*.command text eol=lf
+*.sh      text eol=lf
+
+*.php  text
+*.sql  text
+*.css  text
+*.js   text
+*.md   text
+
+*.png   binary
+*.woff2 binary
+*.sqlite binary
